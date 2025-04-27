@@ -1,13 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from database import get_db
 from models import User
-from utils import hash_password, verify_password, create_access_token, verify_token
-from email_utils import send_verification_email
-from datetime import timedelta
+from utils import verify_password, create_access_token
 import os
 from dependencies import get_current_user
+
 
 
 router = APIRouter()
@@ -28,7 +27,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-# **Logout Route**
-@router.post("/logout/", status_code=status.HTTP_200_OK)
-def logout(current_user: User = Depends(get_current_user)):
-    return {"message": "Successfully logged out. Please delete your token on the client side."}
+@router.post("/logout")
+async def logout(response: Response, user: User = Depends(get_current_user)):
+    response.delete_cookie(key="access_token")
+    return {"message": f"User {user.email} successfully logged out"}

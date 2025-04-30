@@ -4,15 +4,31 @@ from sqlalchemy.orm import Session
 from database import get_db
 from utils import verify_token
 from models import User
+from fastapi import Request
 
 # OAuth2PasswordBearer instance, used to extract token from Authorization header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 # Get current user from the JWT token
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+def get_current_user(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> User:
+    # Try to get token from the cookie
+    token = request.cookies.get("access_token")
+
+    if not token:
+        # Optionally check Authorization header fallback
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     payload = verify_token(token)
     if payload is None:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     user_email = payload.get("sub")
     user = db.query(User).filter(User.email == user_email).first()

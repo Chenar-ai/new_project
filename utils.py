@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from passlib.context import CryptContext
 from dotenv import load_dotenv
+from fastapi import HTTPException, status
 
 # Load environment variables (like SECRET_KEY) from .env file
 load_dotenv()
@@ -39,14 +40,27 @@ def create_access_token(data: dict, roles: list[str], expires_delta: Optional[ti
 # Verify and decode a JWT access token
 def verify_token(token: str) -> Optional[dict]:
     try:
+        # Decode the token
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+        # Check the expiration time (exp)
         exp_timestamp = payload.get("exp")
         if exp_timestamp is None:
-            return None
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Token does not have an expiration date")
 
+        # Compare the expiration time to the current time
         expire_time = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
-        if expire_time >= datetime.now(tz=timezone.utc):
-            return payload
-        return None
-    except jwt.PyJWTError:
-        return None
+
+        # If expired, return None or raise an exception
+        if expire_time < datetime.now(tz=timezone.utc):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+
+        return payload  # Return the decoded payload if the token is valid
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate token")

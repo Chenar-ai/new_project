@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 
 class UserCreate(BaseModel):
@@ -46,3 +47,32 @@ class ServiceResponse(ServiceCreate):
 
     class Config:
         from_attributes = True  # Use from_attributes instead of orm_mode
+
+
+class UserProfileCreate(BaseModel):
+    name: str
+    bio: Optional[str] = None
+    phone_number: Optional[str] = None
+    profile_picture: Optional[str] = None  # URL or path to the picture
+
+    class Config:
+        from_attributes = True
+
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    phone_number: Optional[str] = None
+    profile_picture: Optional[str] = None  # URL or path to the picture
+
+    class Config:
+        from_attributes = True
+
+class UserProfileResponse(BaseModel):
+    id: int
+    name: str
+    bio: Optional[str] = None
+    phone_number: Optional[str] = None
+    profile_picture: Optional[str] = None
+
+    class Config:
+        from_attributes = True

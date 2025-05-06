@@ -11,6 +11,7 @@ user_roles = Table(
     Column('role_id', Integer, ForeignKey('roles.id'))
 )
 
+
 # CareerType Model - New
 class CareerType(Base):
     __tablename__ = 'career_types'
@@ -22,7 +23,25 @@ class CareerType(Base):
     def __repr__(self):
         return f"<CareerType(name={self.name})>"
 
-# User Model
+
+# UserProfile Model - New
+class UserProfile(Base):
+    __tablename__ = 'user_profiles'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), unique=True)
+    name = Column(String, index=True)
+    bio = Column(Text, nullable=True)
+    profile_picture = Column(String, nullable=True)  # Path to the profile picture file
+    phone_number = Column(String, nullable=True)
+
+    user = relationship("User", back_populates="profile")
+
+    def __repr__(self):
+        return f"<UserProfile(user_id={self.user_id}, name={self.name})>"
+
+
+# User Model - Updated with UserProfile relationship
 class User(Base):
     __tablename__ = 'users'
 
@@ -36,9 +55,11 @@ class User(Base):
 
     roles = relationship("Role", secondary=user_roles, back_populates="users")
     services = relationship("Service", back_populates="user")
+    profile = relationship("UserProfile", back_populates="user", uselist=False)  # One-to-one relationship
 
     def __repr__(self):
         return f"<User(email={self.email}, full_name={self.full_name})>"
+
 
 # Role Model
 class Role(Base):
@@ -51,6 +72,7 @@ class Role(Base):
 
     def __repr__(self):
         return f"<Role(name={self.name})>"
+
 
 # Service Model - Updated with CareerType link
 class Service(Base):
@@ -71,4 +93,3 @@ class Service(Base):
 
     def __repr__(self):
         return f"<Service(name={self.name}, category={self.category}, price={self.price}, currency={self.currency})>"
-

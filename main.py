@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import auth, user, roles, verify, career_type_router, service_router
+from routers import auth, user, roles, verify, career_type_router, service_router, user_profile_router
 
 
 
@@ -12,3 +12,5 @@ app.include_router(roles.router, prefix="/roles", tags=["roles"])
 app.include_router(verify.router, prefix="/verify", tags=["verify"])
 app.include_router(career_type_router.router, prefix="/admin", tags=["admin"])
 app.include_router(service_router.router, prefix="/users", tags=["users"])
+app.include_router(user_profile_router.router, prefix="/user-profile", tags=["user-profile"])
+

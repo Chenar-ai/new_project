@@ -11,7 +11,7 @@ from dependencies import get_current_user
 
 
 router = APIRouter()
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7090")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7070")
 
 # **Login Route**
 @router.post("/login/")

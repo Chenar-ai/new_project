@@ -40,8 +40,9 @@ class UserProfile(Base):
     def __repr__(self):
         return f"<UserProfile(user_id={self.user_id}, name={self.name})>"
 
+    # models.py
 
-# User Model - Updated with UserProfile relationship
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -56,6 +57,10 @@ class User(Base):
     roles = relationship("Role", secondary=user_roles, back_populates="users")
     services = relationship("Service", back_populates="user")
     profile = relationship("UserProfile", back_populates="user", uselist=False)  # One-to-one relationship
+    bookings_as_customer = relationship("Booking", back_populates="user",
+                                        foreign_keys="[Booking.user_id]")  # Customer bookings
+    bookings_as_provider = relationship("Booking", back_populates="provider",
+                                        foreign_keys="[Booking.provider_id]")  # Provider bookings
 
     def __repr__(self):
         return f"<User(email={self.email}, full_name={self.full_name})>"
@@ -74,22 +79,49 @@ class Role(Base):
         return f"<Role(name={self.name})>"
 
 
-# Service Model - Updated with CareerType link
+# models.py
+
 class Service(Base):
     __tablename__ = 'services'
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    name = Column(String, index=True)
-    description = Column(Text)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    description = Column(String)
     price = Column(Float)
-    category = Column(String, index=True)
-    currency = Column(String, default="USD")  # Store currency as a string
-    user_id = Column(Integer, ForeignKey('users.id'))  # Foreign key to the User model
-    career_type_id = Column(Integer, ForeignKey('career_types.id'))  # Foreign key to CareerType
+    category = Column(String)
+    user_id = Column(Integer, ForeignKey('users.id'))
 
-    # Relationships
     user = relationship("User", back_populates="services")
-    career_type = relationship("CareerType")
+    bookings = relationship("Booking", back_populates="service")  # Add this line
 
     def __repr__(self):
-        return f"<Service(name={self.name}, category={self.category}, price={self.price}, currency={self.currency})>"
+        return f"<Service(name={self.name}, description={self.description})>"
+
+
+
+# models.py
+
+class Booking(Base):
+    __tablename__ = 'bookings'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    provider_id = Column(Integer, ForeignKey('users.id'))
+    service_id = Column(Integer, ForeignKey('services.id'))
+    booking_date = Column(DateTime)
+    reminder_time = Column(DateTime)
+
+    user = relationship("User", back_populates="bookings_as_customer", foreign_keys=[user_id])
+    provider = relationship("User", back_populates="bookings_as_provider", foreign_keys=[provider_id])
+    service = relationship("Service", back_populates="bookings")
+
+    def __repr__(self):
+        return f"<Booking(user_id={self.user_id}, provider_id={self.provider_id}, service_id={self.service_id})>"
+
+    @property
+    def customer_email(self):
+        return self.user.email  # Assuming the user is the customer
+
+    @property
+    def provider_email(self):
+        return self.provider.email  # Assuming the provider is also a User

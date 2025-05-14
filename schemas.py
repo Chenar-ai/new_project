@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from datetime import datetime
 
 
 class UserCreate(BaseModel):
@@ -76,3 +77,36 @@ class UserProfileResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+
+
+
+
+class BookingCreate(BaseModel):
+    user_id: int
+    provider_id: int
+    service_id: int
+    booking_date: datetime  # Add this field to store the booking date
+    reminder_time: datetime  # Optionally, you can include a reminder time if needed
+
+    class Config:
+        from_attributes = True
+
+
+
+class BookingResponse(BaseModel):
+    booking_id: int
+    user_id: int
+    provider_id: int
+    service_id: int
+    status: str
+    booking_date: datetime
+    service_details: Optional[str] = None
+    payment_status: str
+
+    class Config:
+        from_attributes = True
+
+
+

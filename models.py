@@ -110,6 +110,8 @@ class Booking(Base):
     service_id = Column(Integer, ForeignKey('services.id'))
     booking_date = Column(DateTime)
     reminder_time = Column(DateTime)
+    status = Column(String, default="pending")  # Add the status field
+    payment_status = Column(String, default="unpaid")  # Add the payment_status field
 
     user = relationship("User", back_populates="bookings_as_customer", foreign_keys=[user_id])
     provider = relationship("User", back_populates="bookings_as_provider", foreign_keys=[provider_id])
@@ -125,3 +127,4 @@ class Booking(Base):
     @property
     def provider_email(self):
         return self.provider.email  # Assuming the provider is also a User
+

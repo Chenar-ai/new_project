@@ -12,7 +12,7 @@ load_dotenv()
 
 EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7070")  # Default to localhost if not found
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7010")  # Default to localhost if not found
 
 print("EMAIL_ADDRESS:", EMAIL_ADDRESS)
 print("EMAIL_PASSWORD present:", bool(EMAIL_PASSWORD))

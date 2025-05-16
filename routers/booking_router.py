@@ -64,17 +64,38 @@ async def create_booking(
     return new_booking
 
 
-
-
-# Get all bookings for a specific user (customer)
 @router.get("/bookings/{user_id}", response_model=list[BookingResponse])
 def get_bookings(user_id: int, db: Session = Depends(get_db)):
+    # Fetch bookings from the database
     bookings = db.query(Booking).filter(Booking.user_id == user_id).all()
+
     if not bookings:
         raise HTTPException(status_code=404, detail="No bookings found")
-    return bookings
 
-# Update booking status
+    # Ensure status and payment_status are populated with defaults if None
+    for booking in bookings:
+        booking.status = booking.status or "pending"  # Set default value if None
+        booking.payment_status = booking.payment_status or "unpaid"  # Set default value if None
+
+    # Convert SQLAlchemy Booking objects to Pydantic BookingResponse objects
+    return [
+        BookingResponse(
+            booking_id=booking.id,  # Map to the primary key 'id'
+            user_id=booking.user_id,
+            provider_id=booking.provider_id,
+            service_id=booking.service_id,
+            status=booking.status,
+            booking_date=booking.booking_date,
+            service_details=booking.service.name if booking.service else None,  # Assuming 'name' in Service model
+            payment_status=booking.payment_status
+        )
+        for booking in bookings
+    ]
+
+
+
+
+
 @router.patch("/bookings/{booking_id}", response_model=BookingResponse)
 def update_booking_status(
         booking_id: int,
@@ -82,7 +103,7 @@ def update_booking_status(
         payment_status: str = None,  # Optional, only update if provided
         db: Session = Depends(get_db)
 ):
-    db_booking = db.query(Booking).filter(Booking.booking_id == booking_id).first()
+    db_booking = db.query(Booking).filter(Booking.id == booking_id).first()  # Filter by 'id', not 'booking_id'
 
     if not db_booking:
         raise HTTPException(status_code=404, detail="Booking not found")
@@ -97,4 +118,15 @@ def update_booking_status(
 
     db.commit()
     db.refresh(db_booking)
-    return db_booking
+
+    # Return the updated booking as a BookingResponse
+    return BookingResponse(
+        booking_id=db_booking.id,
+        user_id=db_booking.user_id,
+        provider_id=db_booking.provider_id,
+        service_id=db_booking.service_id,
+        status=db_booking.status,
+        booking_date=db_booking.booking_date,
+        service_details=db_booking.service.name if db_booking.service else None,  # Assuming 'name' in Service model
+        payment_status=db_booking.payment_status
+    )

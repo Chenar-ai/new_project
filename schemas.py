@@ -100,13 +100,14 @@ class BookingResponse(BaseModel):
     user_id: int
     provider_id: int
     service_id: int
-    status: str
+    status: str  # Include status in the response
     booking_date: datetime
     service_details: Optional[str] = None
-    payment_status: str
+    payment_status: str  # Include payment_status in the response
 
     class Config:
         from_attributes = True
+
 
 
 

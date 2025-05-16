@@ -11,7 +11,7 @@ import os
 
 router = APIRouter()
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7070")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7010")
 
 # **Create User Route**
 @router.post("/users/", response_model=UserResponse)

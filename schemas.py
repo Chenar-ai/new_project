@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -108,6 +108,17 @@ class BookingResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+
+class AdminUserCreate(BaseModel):
+    email: str
+    full_name: str
+    password: str
+    roles: List[str]  # Roles can be a list like ["admin", "provider"]
+    is_active: Optional[bool] = True  # Optionally allow the admin to deactivate a user at creation
+
+    class Config:
+        from_attributes  = True  # Make sure it works with SQLAlchemy models
 
 
 

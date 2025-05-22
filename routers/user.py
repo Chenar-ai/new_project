@@ -5,26 +5,53 @@ from schemas import UserCreate, UserResponse, ResetPasswordInput
 from database import get_db
 from dependencies import get_current_user
 from utils import hash_password, create_access_token, verify_token
-from email_utils import send_password_reset_email  # Updated import
+from email_utils import send_password_reset_email
 from datetime import timedelta
 import os
+from email_utils import send_verification_email
+from urllib.parse import quote
+
 
 router = APIRouter()
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7010")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:9550")
 
-# **Create User Route**
-@router.post("/users/", response_model=UserResponse)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == user.email).first()
+@router.post("/users/")
+def create_user(
+    user_data: UserCreate,  # Assuming UserCreate is the schema for the user registration
+    db: Session = Depends(get_db)
+):
+    # Check if the user already exists
+    existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_pw = hash_password(user.password)
-    new_user = User(email=user.email, full_name=user.full_name, hashed_password=hashed_pw)
+
+    # Create the new user and hash the password
+    hashed_password = hash_password(user_data.password)
+    new_user = User(
+        email=user_data.email,
+        full_name=user_data.full_name,
+        hashed_password=hashed_password,
+        is_verified=False  # User is not verified by default
+    )
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
+
+    # Corrected: Pass a dictionary containing the email
+    verification_token = create_access_token(data={"sub": new_user.email}, roles=[role.name for role in new_user.roles])
+
+    # Generate the verification URL (this will be used by the user to verify their email)
+    verification_url = f"{FRONTEND_URL}/verify/verify-email?token={quote(verification_token)}"
+
+    send_verification_email(
+        new_user.email,
+        "Please verify your email address",  # Subject passed here
+        f"Click the following link to verify your email: {verification_url}"  # Body passed here
+    )
+
+    return {"message": "User created successfully. Please check your email for the verification link."}
 
 # **Get Current User**
 @router.get("/users/me", response_model=UserResponse)

@@ -9,7 +9,6 @@ from fastapi import Request
 # OAuth2PasswordBearer instance to extract token from Authorization header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-# Get current user from the JWT token
 def get_current_user(
     request: Request,
     db: Session = Depends(get_db)
@@ -48,3 +47,14 @@ def role_required(required_roles: list[str]):
             raise HTTPException(status_code=403, detail="Insufficient permissions")
         return current_user
     return role_checker
+
+
+# Helper function to check if user has admin role (case-insensitive)
+def admin_only(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> User:
+    # Ensure that the user has the admin role (case-insensitive)
+    if not any(role.name.lower() == "admin" for role in current_user.roles):  # Convert to lowercase for comparison
+        raise HTTPException(status_code=403, detail="Not authorized as admin")
+
+    return current_user
+
+

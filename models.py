@@ -18,6 +18,7 @@ class CareerType(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    services = relationship("Service", back_populates="career_type")
     is_approved = Column(Boolean, default=False)  # Admin approval flag
 
     def __repr__(self):
@@ -89,13 +90,17 @@ class Service(Base):
     description = Column(String)
     price = Column(Float)
     category = Column(String)
-    user_id = Column(Integer, ForeignKey('users.id'))
+    currency = Column(String, default="MYR")  # Optional field with a default value
+    user_id = Column(Integer, ForeignKey('users.id'))  # Foreign key to users
+    career_type_id = Column(Integer, ForeignKey('career_types.id'))  # Foreign key to career_types table
 
     user = relationship("User", back_populates="services")
-    bookings = relationship("Booking", back_populates="service")  # Add this line
+    career_type = relationship("CareerType", back_populates="services")
+    bookings = relationship("Booking", back_populates="service")
 
     def __repr__(self):
         return f"<Service(name={self.name}, description={self.description})>"
+
 
 
 

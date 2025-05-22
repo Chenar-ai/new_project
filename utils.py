@@ -15,7 +15,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Fetch your secret key and JWT settings from environment
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Default expiration time
 
 # Hash a plain password
 def hash_password(password: str) -> str:
@@ -32,7 +32,7 @@ def create_access_token(data: dict, roles: list[str], expires_delta: Optional[ti
     if expires_delta:
         expire = datetime.now(tz=timezone.utc) + expires_delta
     else:
-        expire = datetime.now(tz=timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(tz=timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)  # Default expiration
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -52,7 +52,7 @@ def verify_token(token: str) -> Optional[dict]:
         # Compare the expiration time to the current time
         expire_time = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
 
-        # If expired, return None or raise an exception
+        # If expired, raise an exception
         if expire_time < datetime.now(tz=timezone.utc):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
 
@@ -63,4 +63,4 @@ def verify_token(token: str) -> Optional[dict]:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Could not validate token: {str(e)}")

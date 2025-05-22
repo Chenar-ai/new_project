@@ -11,7 +11,7 @@ from database import SessionLocal
 load_dotenv()
 
 # Get the FRONTEND_URL from the environment variables
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7010")  # Default to localhost if not found
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:9550")  # Default to localhost if not found
 
 # Initialize the scheduler
 scheduler = BackgroundScheduler()

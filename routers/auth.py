@@ -11,9 +11,8 @@ from dependencies import get_current_user
 
 
 router = APIRouter()
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7010")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:9550")
 
-# **Login Route**
 @router.post("/login/")
 def login(
     response: Response,
@@ -31,18 +30,21 @@ def login(
         roles=[role.name for role in user.roles]
     )
 
+    # Log the access token and roles for debugging
+    print(f"Access Token: {access_token}")
+    print(f"Roles: {[role.name for role in user.roles]}")
+
     # Set the token as a cookie
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
         max_age=3600,  # 1 hour
-        samesite="Lax",  # Adjust if using cross-origin frontend
-        secure=False     # Set True if using HTTPS
+        samesite="None",  # "None" allows cross-origin cookies
+        secure=True  # Set to True if you're using HTTPS in production
     )
 
     return {"message": "Login successful"}
-
 
 @router.post("/logout")
 def logout(response: Response, user: User = Depends(get_current_user)):

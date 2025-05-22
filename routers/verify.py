@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from models import User
 from utils import verify_token
@@ -6,9 +6,10 @@ from database import get_db
 
 router = APIRouter()
 
-# **Email Verification Route**
-@router.get("/verify-email/")
+
+@router.get("/verify-email")
 def verify_email(token: str, db: Session = Depends(get_db)):
+    print(f"Received token: {token}")  # Log the token received
     payload = verify_token(token)
     if not payload:
         raise HTTPException(status_code=400, detail="Invalid or expired token")

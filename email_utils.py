@@ -12,7 +12,7 @@ load_dotenv()
 
 EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7010")  # Default to localhost if not found
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:9550")  # Default to localhost if not found
 
 print("EMAIL_ADDRESS:", EMAIL_ADDRESS)
 print("EMAIL_PASSWORD present:", bool(EMAIL_PASSWORD))
@@ -77,21 +77,20 @@ def send_booking_confirmation_email(to_email: str, subject: str, booking_details
     send_email_smtp(to_email, subject, html_body)
 
 
-# Function to send a user verification email
 def send_verification_email(to_email: str, subject: str, body: str):
-    subject = "Verify your email"
+    # No need to redefine 'subject' here, use the passed-in argument instead.
     token = create_access_token(
         data={"sub": to_email},
         roles=[],  # You can add user roles here if needed
         expires_delta=timedelta(hours=1)
     )
 
-    verification_link = f"{FRONTEND_URL}/verify-email?token={token}"
+    verification_link = f"{FRONTEND_URL}/verify/verify-email?token={token}"
 
     msg = MIMEMultipart()
     msg['From'] = EMAIL_ADDRESS
     msg['To'] = to_email
-    msg['Subject'] = subject
+    msg['Subject'] = subject  # Use the passed-in subject here
     html_body = f"""
     <html>
       <body style="font-family: Arial, sans-serif; line-height: 1.6;">
@@ -110,7 +109,7 @@ def send_verification_email(to_email: str, subject: str, body: str):
     """
     msg.attach(MIMEText(html_body, 'html'))
 
-    send_email_smtp(to_email, subject, html_body)
+    send_email_smtp(to_email, subject, html_body)  # Send the email using the provided subject
 
 
 # Function to send a password reset email

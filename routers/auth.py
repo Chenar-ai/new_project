@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from database import get_db
 from models import User
-from utils import verify_password, create_access_token
+from utils import verify_password, create_access_token, log_activity
 import os
 from dependencies import get_current_user
 
@@ -42,6 +42,13 @@ def login(
         max_age=3600,  # 1 hour
         samesite="None",  # "None" allows cross-origin cookies
         secure=True  # Set to True if you're using HTTPS in production
+    )
+
+    log_activity(
+        db=db,
+        user_id=user.id,
+        action="User Login",
+        details=f"User {user.email} logged in"
     )
 
     return {"message": "Login successful"}

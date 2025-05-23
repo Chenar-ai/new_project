@@ -4,7 +4,7 @@ from models import User
 from schemas import UserCreate, UserResponse, ResetPasswordInput
 from database import get_db
 from dependencies import get_current_user
-from utils import hash_password, create_access_token, verify_token
+from utils import hash_password, create_access_token, verify_token, log_activity
 from email_utils import send_password_reset_email
 from datetime import timedelta
 import os
@@ -38,6 +38,14 @@ def create_user(
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    # Log activity
+    log_activity(
+        db=db,
+        user_id=new_user.id,
+        action="User Registration",
+        details=f"User {new_user.email} registered"
+    )
 
     # Corrected: Pass a dictionary containing the email
     verification_token = create_access_token(data={"sub": new_user.email}, roles=[role.name for role in new_user.roles])

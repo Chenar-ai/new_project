@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models import User, Role
+from models import User, Role, ActivityLog
 from passlib.context import CryptContext
 
 # Password hashing setup
@@ -68,4 +68,8 @@ def deactivate_user(db: Session, user_id: int):
         db.refresh(db_user)
         return db_user
     return None
+
+
+def get_logs(db: Session, limit: int = 100, skip: int = 0):
+    return db.query(ActivityLog).order_by(ActivityLog.timestamp.desc()).offset(skip).limit(limit).all()
 

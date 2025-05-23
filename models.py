@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, Table, Foreig
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
+from datetime import datetime
 
 # Association table to link users with roles
 user_roles = Table(
@@ -62,6 +63,7 @@ class User(Base):
                                         foreign_keys="[Booking.user_id]")  # Customer bookings
     bookings_as_provider = relationship("Booking", back_populates="provider",
                                         foreign_keys="[Booking.provider_id]")  # Provider bookings
+    activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(email={self.email}, full_name={self.full_name})>"
@@ -133,3 +135,15 @@ class Booking(Base):
     def provider_email(self):
         return self.provider.email  # Assuming the provider is also a User
 
+
+
+class ActivityLog(Base):
+    __tablename__ = "activity_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Nullable for system actions
+    action = Column(String(100), nullable=False)
+    details = Column(Text, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="activity_logs")

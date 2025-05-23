@@ -122,3 +122,12 @@ class AdminUserCreate(BaseModel):
 
 
 
+class ActivityLogResponse(BaseModel):
+    id: int
+    user_id: int
+    action: str
+    details: str
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True

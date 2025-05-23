@@ -5,6 +5,9 @@ from typing import Optional
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+from models import ActivityLog
+
 
 # Load environment variables (like SECRET_KEY) from .env file
 load_dotenv()
@@ -64,3 +67,9 @@ def verify_token(token: str) -> Optional[dict]:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Could not validate token: {str(e)}")
+
+
+def log_activity(db: Session, user_id: int, action: str, details: str = None):
+    log = ActivityLog(user_id=user_id, action=action, details=details)
+    db.add(log)
+    db.commit()

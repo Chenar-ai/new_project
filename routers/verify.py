@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from models import User
-from utils import verify_token
+from utils import verify_token, log_activity
 from database import get_db
 
 router = APIRouter()
@@ -24,4 +24,10 @@ def verify_email(token: str, db: Session = Depends(get_db)):
 
     user.is_verified = True
     db.commit()
+    log_activity(
+        db=db,
+        user_id=user.id,
+        action="Email Verified",
+        details=f"User {user.email} verified their email"
+    )
     return {"message": "Email verified successfully"}

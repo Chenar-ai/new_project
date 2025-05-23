@@ -2,14 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
 from models import User, Role
 from database import get_db
-from crud_operations.user_crud import get_users, create_user, update_user, deactivate_user  # Don't use create_user here
+from crud_operations.user_crud import get_users, create_user, update_user, deactivate_user, get_logs  # Don't use create_user here
 from dependencies import admin_only
-from schemas import AdminUserCreate, UserResponse
+from schemas import AdminUserCreate, UserResponse, ActivityLogResponse
 from sqlalchemy import func
 from email_utils import send_verification_email
 from urllib.parse import quote
-from utils import  create_access_token
+from utils import  create_access_token, log_activity
 import os
+
 
 
 router = APIRouter()
@@ -24,7 +25,7 @@ def list_all_users(db: Session = Depends(get_db), current_user: User = Depends(a
 
 # **Create Admin User** (Admin Only)
 @router.post("/admin/users/", response_model=UserResponse)
-def create_admin_user(user: AdminUserCreate, db: Session = Depends(get_db), current_user: User = Depends(admin_only)):
+def create_admin_user(user: AdminUserCreate, db: Session = Depends(get_db), _current_user: User = Depends(admin_only)):
     # Ensure user does not exist already
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
@@ -59,6 +60,13 @@ def create_admin_user(user: AdminUserCreate, db: Session = Depends(get_db), curr
         f"Click the following link to verify your email: {verification_url}"  # Body
     )
 
+    log_activity(
+        db=db,
+        user_id=_current_user.id,
+        action="Create User",
+        details=f"Created user {new_user.email} with role(s) {', '.join([r.name for r in new_user.roles])}"
+    )
+
     # Return the newly created user with required fields as a response
     return UserResponse(
         id=new_user.id,
@@ -67,6 +75,9 @@ def create_admin_user(user: AdminUserCreate, db: Session = Depends(get_db), curr
         is_active=new_user.is_active,
         is_verified=False  # Since the email is not verified yet
     )
+
+
+
 
 
 def str_to_bool(value: str) -> bool:
@@ -102,24 +113,49 @@ def update_admin_user(
         is_active=is_active,
         roles=roles
     )
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    log_activity(
+        db=db,
+        user_id=_current_user.id,
+        action="Update User",
+        details=f"Updated User {user.email} with role(s) {', '.join([r.name for r in user.roles])}"
+    )
+
+
     return user
+
 
 
 
 # **Deactivate User** (Admin Only)
 @router.patch("/admin/users/{user_id}/deactivate")
-def deactivate_user_route(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(admin_only)):
+def deactivate_user_route(user_id: int, db: Session = Depends(get_db), _current_user: User = Depends(admin_only)):
     user = deactivate_user(db=db, user_id=user_id)  # Using the deactivated function
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    log_activity(
+        db=db,
+        user_id=_current_user.id,
+        action="Deactivate User",
+        details=f"Deactivated User {user.email} with role(s) {', '.join([r.name for r in user.roles])}"
+    )
     return {"message": "User deactivated successfully"}
+
+
 
 # **Get User by ID** (Admin Only)
 @router.get("/admin/users/{user_id}")
-def get_user_by_id(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(admin_only)):
+def get_user_by_id(user_id: int, db: Session = Depends(get_db), _current_user: User = Depends(admin_only)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+@router.get("/admin/activity-logs", response_model=list[ActivityLogResponse])
+def view_activity_logs(limit: int = 100, skip: int = 0, db: Session = Depends(get_db), _admin_user = Depends(admin_only)):
+    logs = get_logs(db=db, limit=limit, skip=skip)
+    return logs
